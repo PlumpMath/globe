@@ -6,7 +6,8 @@
 
 (def-alias World-Map Map)
 (def-alias World-State '{:base-objects Map
-                         :world-objects Map})
+                         :world-objects Map
+                         :living-objects Map})
 
 
 (def-alias World '{:map    World-Map
@@ -24,6 +25,10 @@
 (def-alias Square (List Obj))
 (def-alias Grid (Vec (Vec Square)))
 
+(def-alias LifeFunc (Fn [World Id EventChan -> (Vec Events)]))
+
+(defn add-living [world id life-func c]
+   (assoc-in world [:state :living-ojects :id] {:life-func life-func :chan c}))
 
 (ann  add-base [World Obj -> World])
 (defn add-base [world obj]

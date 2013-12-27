@@ -34,43 +34,61 @@
 
 (def-alias Event  '[InstId Action Tic])
 
-(ann       run-event [World Event EventQueue -> World])
-(defmulti  run-event (fn [world [sender [tag params] tic] queue] tag))
+(ann       run-event [World Event EventMult -> World])
+(defmulti  run-event (fn [world [sender [tag params] tic] mul] tag))
 
-(defmethod run-event :add-node    [world [_ [_ [location id]] _] _]
+(defmethod run-event :add-node
+  [world [_ [_ [location id]] _] _]
   (add-node    world location id))
 
-(defmethod run-event :remove-node [world [_ [_ [location id]] _] _]
+(defmethod run-event :remove-node
+  [world [_ [_ [location id]] _] _]
   (remove-node world location id))
 
-(defmethod run-event :add-base    [world [_ [_ [obj]] _] _]
+(defmethod run-event :add-base
+  [world [_ [_ [obj]] _] _]
   (add-base world obj))
 
-(defmethod run-event :remove-base [world [_ [_ [obj]] _] _]
+(defmethod run-event :remove-base
+  [world [_ [_ [obj]] _] _]
   (remove-base world obj))
 
-(defmethod run-event :damage      [world [sender [_ [target-id amount]] _] _]
+(defmethod run-event :damage
+  [world [sender [_ [target-id amount]] _] _]
   (let [new-hp (- (get-obj-stat target-id :hp) amount)]
     (if (< amount 0)
      (destroy-obj world target-id)
      (assoc-obj world target-id :hp new-hp))))
 
-(defmethod run-event :damage      [world [sender [_ [target-id amount]] _] _]
+(defmethod run-event :damage
+  [world [sender [_ [target-id amount]] _] _]
   (update-obj world target-id :hp (partial + amount)))
 
-(defmethod run-event :create      [world [sender [_ [id location]] _] _]
+(defmethod run-event :create
+  [world [sender [_ [id location]] _] _]
   (init-obj world id location))
 
-(defmethod run-event :destroy     [world [sender [_ [id location]] _] _]
+(defmethod run-event :destroy
+  [world [sender [_ [id location]] _] _]
   (destroy-obj world id))
 
-(defmethod run-event :move        [world [sender [_ [id location]] _] _]
+(defmethod run-event :move
+  [world [sender [_ [id location]] _] _]
   (move-obj world id location))
 
-(defmethod run-event :tic [world _ _]
+(defmethod run-event :tic
+  [world _ _]
   (tic world))
 
-(defmethod run-event :die [_ _ _]
+(defmethod run-event :die
+  [_ _ _]
   (comment "die here... I dont know how"))
 
-
+(defmethod run-event :enliven
+  [world [sender [_ [id life-func filter-fun] tic] mul]]
+  (let [c (chan)]
+   (add-living world id life-func (tap mul (filter> filter-fun c)))))
+
+(defmethod run-event :kill
+  [world [ _ [_ [id] _] _]]
+    (remove-living world id))
