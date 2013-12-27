@@ -1,6 +1,7 @@
 (ns globe.events
  (:require
   [clojure.core.typed :refer :all]
+  [clojure.core.async  :refer [mult filter> chan tap]]
   [globe.world :refer :all]))
 
 (def-alias Obj Any)
@@ -34,7 +35,7 @@
 
 (def-alias Event  '[InstId Action Tic])
 
-(ann       run-event [World Event EventMult -> World])
+(ann       run-event [World Event EventChan -> World])
 (defmulti  run-event (fn [world [sender [tag params] tic] mul] tag))
 
 (defmethod run-event :add-node
@@ -84,10 +85,15 @@
   [_ _ _]
   (comment "die here... I dont know how"))
 
+(defmethod run-event :life
+  [world _ mul]
+  (let [living (get-in world [:state :living-objects])]
+    (map> (fn [k v] (run-one world k v)) ch)))
+
 (defmethod run-event :enliven
-  [world [sender [_ [id life-func filter-fun] tic] mul]]
-  (let [c (chan)]
-   (add-living world id life-func (tap mul (filter> filter-fun c)))))
+  [world [sender [_ [id life-func filter-fun] tic] ch]]
+  (let [c (chan 500)]
+   (add-living world id life-func (tap (mult ch) (filter> filter-fun c)))))
 
 (defmethod run-event :kill
   [world [ _ [_ [id] _] _]]

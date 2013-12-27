@@ -28,7 +28,11 @@
 (def-alias LifeFunc (Fn [World Id EventChan -> (Vec Events)]))
 
 (defn add-living [world id life-func c]
-   (assoc-in world [:state :living-ojects :id] {:life-func life-func :chan c}))
+   (assoc-in world [:state :living-objects :id] {:life-func life-func :ch c}))
+
+(ann  run-one [World Id '{:life-func LifeFunc :ch EventChan} -> (Vec Events)])
+(defn run-one [world id {:keys [life-func ch]}]
+  (life-func world id ch))
 
 (ann  add-base [World Obj -> World])
 (defn add-base [world obj]
