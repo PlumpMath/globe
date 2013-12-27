@@ -98,7 +98,7 @@
   (-> (move-node world old-loc new-loc id)
       (assoc-obj id :location new-loc))))
 
-(ann  destroy-obj  [World InstId -> World])
+(ann  destroy-obj [World InstId -> World])
 (defn destroy-obj [world id]
   (let [loc (:location (get-obj world id))]
   (-> (dissoc-in world [:state :world-objects id])

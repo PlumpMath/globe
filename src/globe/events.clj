@@ -46,25 +46,25 @@
 (defmethod run-event :add-base    [world [_ [_ [obj]] _] _]
   (add-base world obj))
 
-(defmethod run-event :remove-base  [world [_ [_ [obj]] _] _]
+(defmethod run-event :remove-base [world [_ [_ [obj]] _] _]
   (remove-base world obj))
 
-(defmethod run-event :damage   [world [sender [_ [target-id amount]] _] _]
+(defmethod run-event :damage      [world [sender [_ [target-id amount]] _] _]
   (let [new-hp (- (get-obj-stat target-id :hp) amount)]
     (if (< amount 0)
      (destroy-obj world target-id)
      (assoc-obj world target-id :hp new-hp))))
 
-(defmethod run-event :damage   [world [sender [_ [target-id amount]] _] _]
-     (update-obj world target-id :hp (partial + amount)))
+(defmethod run-event :damage      [world [sender [_ [target-id amount]] _] _]
+  (update-obj world target-id :hp (partial + amount)))
 
-(defmethod run-event :create  [world {[_ {:keys [id location]}] :action}]
+(defmethod run-event :create      [world [sender [_ [id location]] _] _]
   (init-obj world id location))
 
-(defmethod run-event :destroy [world {[_ {:keys [id]}] :action} _]
+(defmethod run-event :destroy     [world [sender [_ [id location]] _] _]
   (destroy-obj world id))
 
-(defmethod run-event :move    [world {[_ {:keys [id location]}] :action} _]
+(defmethod run-event :move        [world [sender [_ [id location]] _] _]
   (move-obj world id location))
 
 (defmethod run-event :tic [world _ _]
