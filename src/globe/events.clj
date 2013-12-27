@@ -1,7 +1,7 @@
 (ns globe.events
  (:require
   [clojure.core.typed :refer :all]
-  [clojure.core.async  :refer [mult filter> chan tap]]
+  [clojure.core.async  :refer [mult filter> chan tap map>]]
   [globe.world :refer :all]))
 
 (def-alias Obj Any)
@@ -86,7 +86,7 @@
   (comment "die here... I dont know how"))
 
 (defmethod run-event :life
-  [world _ mul]
+  [world _ ch]
   (let [living (get-in world [:state :living-objects])]
     (map> (fn [k v] (run-one world k v)) ch)))
 
