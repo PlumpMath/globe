@@ -10,8 +10,7 @@
                          :world-objects Map})
 
 
-(def-alias World '{:events  Chan
-                   :map    World-Map
+(def-alias World '{:map    World-Map
                    :state  World-State
                    :tic          AnyInteger})
 
