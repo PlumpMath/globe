@@ -1,63 +1,85 @@
 (ns globe.entities
   (:require
+   [clojure.core.incubator :refer :all]
    [clojure.core.async :refer [go >! >!!]]
    [clojure.core.typed :refer :all]))
 
+(ann  add-base [World Obj -> World])
 (defn add-base [world obj]
-  (assoc-in world  ([:base-objects (get-in obj [:stats :sym])]) obj))
+  (assoc-in world  ([:state :base-objects (get-in obj [:stats :sym])]) obj))
 
-(ann god Keyword)
-(def god (keyword (gensym "god")))
+(ann  remove-base [World Obj ->World])
+(defn remove-base [world obj]
+  (dissoc-in world ([:state :base-objects (get-in obj [:stats :sym])]) obj))
 
 (ann  get-spot [World Spot -> (Option (U Square Grid))])
-(defn get-spot
-  "Givein a location get-location navigates the world
-  to try to find the place asked for, it will return a
-  list of things found"
-  [world spot]
-  (get-in (:map world) spot))
+(defn get-spot [world spot]
+  (get-in world [:map spot] ))
 
-(ann update-spot [World Spot (U Square Grid) -> (Option (U Grid World-Map))])
-(defn update-spot
-  [world spot o]
-  (update-in (:map world) spot #(o)))
+(ann  update-spot [World Spot (Spot -> Spot) -> (Option World)])
+(defn update-spot [world spot f]
+  (update-in  world [:map spot] f))
 
-(ann  assoc-spot [World Spot (U Square Grid) -> (Option (U Grid World-Map))])
-(defn assoc-spot
-  [world loc o]
-  (assoc-in (:map world) loc o))
+(ann  assoc-spot [World Spot (U Square Grid) -> (Option World)])
+(defn assoc-spot [world loc o]
+  (assoc-in world [:map loc] o))
 
-(defn add-node [world loc obj]
+
+(ann  add-node [World Spot Keyword -> (Option World)])
+(defn add-node [world loc id]
   (let [square (get-spot world loc)
-        updated-square (conj square obj)]
+        updated-square (conj square id)]
   (assoc-spot world loc updated-square)))
 
-(defn remove-node [world loc obj]
+(ann  remove-node [World Spot Keyword -> (Option World)])
+(defn remove-node [world loc id]
   (let [square (get-spot world loc)
-        updated-square (remove (partial = obj) square )]
-  (assoc-spot world loc updated-square)))
-(ann  init-obj [World Symbol Location -> Instance])
-
-(defn update-node [world loc obj]
-  (let [square (get-spot world loc)
-        new-square (remove (partial = obj) square)
-        updated-square (conj new-square obj)]
+        updated-square (disj square id)]
   (assoc-spot world loc updated-square)))
 
+(ann  move-node [World Spot Spot Keyword -> (Option World)])
+(defn move-node [world old-loc new-loc id]
+  (-> (remove-node old-loc id)
+      (add-node    new-loc id)))
+
+(ann  genname [String -> Keyword])
 (defn genname [base]
   (keyword (gensym (get-in base [:states :prefix]))))
 
-(defn init-obj [{:keys [events state tic]} base loc]
+(ann  get-obj [World Keyword -> Obj])
+(defn get-obj [world id]
+  (get-in [:state :world-objects id]))
+
+(defn get-obj-stat [world id stat]
+  (get-in [:state :world-objects id stat]))
+
+(ann  init-obj [World Keyword Spot -> World])
+(defn init-obj [{:keys [events state tic] :as world}  base loc]
   (let [base-obj (get-in state [:base-objects base])
         loc-obj (assoc-in base-obj [:stats :location] loc)
         id (genname loc-obj)
-        init-obj (assoc-in loc-obj [:stats :id] id)]
-    (conj (:world-objects state) inst-obj )
-    (>! events {:sender god :action '[:add-node '{:location loc :ref id }] :tic tic})))
+        inst-obj (assoc-in loc-obj [:stats :id] id)]
+    (-> assoc-in world [:state :world-objects id] inst-obj
+    (add-node loc inst-obj))))
 
+(ann  update-obj [World Keyword Keyword Fn])
+(defn update-obj [world id k f]
+  (update-in world [:state :world-objects id k] f))
 
+(ann  assoc-obj [World Keyword Keyword Any])
+(defn assoc-obj [world id k v]
+  (assoc-in world [:state :world-objects id k] v))
 
+(ann  move-obj [World Spot Spot Keyword -> (Option World)])
+(defn move-obj [world new-loc id]
+  (let [old-loc (:location (get-obj world id))]
+  (-> (move-node world old-loc new-loc id)
+      (assoc-obj id :location new-loc))))
 
+(defn destroy-obj [world id]
+  (let [loc (:location (get-obj world id))]
+  (-> (dissoc-in world [:state :world-objects id])
+      (remove-node loc id))))
 
 
 

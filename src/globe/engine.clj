@@ -1,6 +1,6 @@
 (ns globe.engine
    (:require
-   [clojure.entities :refer :all]
+   [globe.entities :refer :all]
    [clojure.core.async :refer [chan]]
    [clojure.core.typed :refer :all]))
 
@@ -28,63 +28,72 @@
 
 (def-alias Obj Any)
 (def-alias Tic AnyInteger)
+(def-alias InstId Keyword)
+(def-alias Add-Node    '[:add-node    '{:id InstId :location Location}])
+(def-alias Remove-Node '[:remove-node '{:id InstId :location Location}])
+(def-alias Add-Base    '[:add-base    '{:obj Obj}])
+(def-alias Remove-Base '[:remove-base '{:obj Obj}])
+(def-alias Create      '[:create      '{:id InstId :location Location}])
+(def-alias Destroy     '[:destroy     '{:id InstId :location Location}])
+(def-alias Damage      '[:damage      '{:target InstId :amount AnyInteger}])
+(def-alias Heal        '[:heal        '{:target InstId :amount AnyInteger}])
+(def-alias Move        '[:move        '{:id InstId :location Location :old Location}])
+(def-alias Tic         '[:tic])
+(def-alias Die         '[:die])
+;Probably should have a checkpoint event
 
-(def-alias Add-Node    '[:add-node    '{:location Location :ref Keyword}])
-(def-alias Remove-Node '[:remove-node '{:obj    Obj :location Location}])
-(def-alias Damage      '[:damage      '{:sender Obj :target Obj :amount AnyInteger}])
-(def-alias Move        '[:move        '{:target Obj :location Location}])
 (def-alias Action
   (U Add-Node
      Remove-Node
+     Add-Base
+     Remove-Base
+     Create
+     Destroy
+     Heal
      Damage
-     Move))
+     Move
+     Tic
+     Die))
 
 (def-alias Event  '{:sender Obj :action Action :tic Tic})
 
 
-
-(ann loc-0 Location)
-(def loc-0 [:awesome-world :level-1 0 0])
-
-(ann  world [Chan Map AnyInteger -> World])
-(defn world [ch m x m2 m3] {:events ch :map m :tic x :base-objects m2 :world-objects m3})
-
-
-
-(ann empty-world World)
-(def empty-world (world chan
-                  {:awesome-world {:level-1 [['(1 7) '(2 3)]
-                                             []
-                                             []
-                                             []]}}
-                  0 {} {}))
-
-
-
-
-(ann tic [World -> World])
+(ann  tic [World -> World])
 (defn tic [world]
   (assoc world :tic (inc (:tic world))))
 
+(ann  loc-wp [Location -> WorldPoint])
 (defn loc-wp
   [[w l _ _]] (vec [w l]))
-
 
 (ann run-event [World Event -> World])
 (defmulti run-event (fn [_ {[tag & _] :action}] tag))
 
-(defmethod run-event :add-node [world {[_ {:keys [location obj]}] :action}]
-  (add-node location obj))
+(defmethod run-event :add-node [world {[_ {:keys [location id]}] :action}]
+  (add-node location id))
 
-(defmethod run-event :remove-node [world {[_ {:keys [location obj]}] :action}]
-  (remove-node location obj))
+(defmethod run-event :remove-node [world {[_ {:keys [location id]}] :action}]
+  (remove-node location id))
 
-(defmethod run-event :damage [world {[_ {:keys [sender target amount]}] :action}]
-  (let [new-hp (- (get-in target [:stats :hp]) amount)]
+(defmethod run-event :damage  [world {[_ {:keys [sender-id target-id amount]}] :action}]
+  (let [new-hp (- (get-obj-stat target-id :hp) amount)]
     (if (< amount 0)
-    (remove-node (get-in target [:stats :location]) target)
-    )))
+     (destroy-obj world target-id)
+     (assoc-obj world target-id :hp new-hp))))
 
+(defmethod run-event :heal [world {[_ {:keys [sender-id target-id amount]}] :action}]
+ )
+(defmethod run-event :create  [world {[_ {:keys [id location]}] :action}]
+  (init-obj world id location))
 
+(defmethod run-event :destroy [world {[_ {:keys [id]}] :action}]
+  (destroy-obj world id))
 
-
+(defmethod run-event :move    [world {[_ {:keys [id location]}] :action}]
+  (move-obj world id location))
+
+(defmethod run-event :tic [world]
+  (tic world))
+
+(defmethod run-event :die []
+  (comment "die here... I dont know how"))
