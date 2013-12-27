@@ -122,11 +122,11 @@
 
 (ann  update-obj-stat [World InstId Keyword Fn -> World])
 (defn update-obj-stat [world id k f]
-  (update-in [:state :world-objects id :stats k] f))
+  (update-in world [:state :world-objects id :stats k] f))
 
 (ann  assoc-obj-stat [World InstId Keyword Fn -> World])
 (defn assoc-obj-stat [world id k v]
-  (assoc-in [:state :world-objects id :stats k] v))
+  (assoc-in world [:state :world-objects id :stats k] v))
 
 
 (ann  tic [World -> World])
