@@ -76,7 +76,7 @@
 
 
 (ann  init-obj [World Keyword Spot -> World])
-(defn init-obj [{:keys [events state tic] :as world}  base loc]
+(defn init-obj [{:keys [state tic] :as world}  base loc]
   (let [base-obj (get-in state [:base-objects base])
         loc-obj (assoc-in base-obj [:stats :location] loc)
         id (genname loc-obj)
