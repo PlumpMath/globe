@@ -27,6 +27,12 @@
 
 (def-alias LifeFunc (Fn [World Id EventChan -> (Vec Events)]))
 
+(ann empty-world-state WorldState)
+(def empty-world-state {:base-objects {} :world-objects {} :living-objects {}})
+
+(ann empty-world World)
+(def empty-world {:map {} :state empty-world-state :tic 0})
+
 (defn add-living [world id life-func c]
    (assoc-in world [:state :living-objects id] {:life-func life-func :ch c}))
 
