@@ -8,7 +8,8 @@
                  [org.clojure/core.incubator "0.1.3"]
                  [org.clojure/core.typed "0.2.19"]
                  [lein-light-nrepl "0.0.9"] ;;Make sure to check what the latest version of lein-light-nrepl is
-                 [org.clojure/core.async "0.1.267.0-0d7780-alpha"]]
+                 [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
+                 [midje "1.5.0"]]
   :repl-options {:nrepl-middleware [lighttable.nrepl.handler/lighttable-ops]})
 
 

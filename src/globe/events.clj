@@ -40,7 +40,7 @@
 ;should be changed to a case statement to deal with old events
 (defn check-event [world event ch]
   (if (> (e-tic event)(:tic world))
-    (do (go (>! ch event)) nil)
+    (do (go (do (Thread/sleep 100) (>! ch event))) nil)
     (if (< (e-tic event)(:tic world)) nil event)))
 
 (ann       run-event [World Event EventChan -> World])

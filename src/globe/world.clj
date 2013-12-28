@@ -100,7 +100,7 @@
         id (genname loc-obj)
         inst-obj (assoc-in loc-obj [:stats :id] id)]
     (-> assoc-in world [:state :world-objects id] inst-obj
-    (add-node loc inst-obj))))
+    (add-node world loc inst-obj))))
 
 (ann  update-obj [World Keyword Keyword Fn])
 (defn update-obj [world id k f]

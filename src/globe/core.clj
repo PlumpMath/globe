@@ -10,10 +10,15 @@
 
 (engine/do-event world/empty-world [:player [:tic []] 0] (chan))
 
-(>!! world-chan  [:player [:tic []] 2] )
+(>!! world-chan  [:player [:tic []] 0] )
 
 (defn add-base-event [obj]
   (>!! world-chan  [:player [:add-base [obj]] 3] ))
+
+(defn create-event [id location]
+  (>!! world-chan  [:player [:create [id location]] 3] ) )
+
+(create-event :stone-wall [:world1 :level1 0 0])
 
 (def add-things
  (do (add-base-event {:ables #{:visable}
