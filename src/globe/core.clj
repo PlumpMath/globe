@@ -10,5 +10,29 @@
 
 (engine/do-event world/empty-world [:player [:tic []] 0] (chan))
 
+(>!! world-chan  [:player [:tic []] 1] )
 
-(>!! world-chan  [:player [:tic []] 0] )
+(defn add-base-event [obj]
+  (>!! world-chan  [:player [:add-base [obj]] 3] ))
+
+(def add-things
+ (do (add-base-event {:ables #{:visable}
+                   :stats  {:name "wood floor"
+                            :char '*
+                            :prefix "wdf"
+                            :sym :wood-floor
+                            :hp 100}} )
+
+     (add-base-event {:ables #{:visable :collideable}
+                   :stats  {:name "stone wall"
+                            :char 'x
+                            :prefix "stw"
+                            :sym :stone-wall
+                            :hp 1000}})
+
+     (add-base-event {:ables #{:visable :collideable}
+                   :stats  {:name "stone statue"
+                           :char 's
+                           :prefix "sts"
+                           :sym :stone-statue
+                           :hp 50}})))

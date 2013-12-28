@@ -45,14 +45,14 @@
 
 (ann  add-base [World Obj -> World])
 (defn add-base [world obj]
-  (assoc-in world  ([:state :base-objects (get-in obj [:stats :sym])]) obj))
+  (assoc-in world  [:state :base-objects (get-in obj [:stats :sym])] obj))
 
 ;This is going to have bug
 ;dissocing a base object this is in use will probably break things...
 
 (ann  remove-base [World Obj ->World])
 (defn remove-base [world obj]
-  (dissoc-in world ([:state :base-objects (get-in obj [:stats :sym])]) obj))
+  (dissoc-in world [:state :base-objects (get-in obj [:stats :sym])] obj))
 
 (ann  get-spot [World Spot -> (Option (U Square Grid))])
 (defn get-spot [world spot]
