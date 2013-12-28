@@ -1,5 +1,6 @@
 (ns globe.world
   (:require
+   [midje.sweet :as t]
    [clojure.core.incubator :refer :all]
    [clojure.core.async :refer [go >! >!!]]
    [clojure.core.typed :refer :all]))
@@ -56,33 +57,31 @@
 
 (ann  get-spot [World Spot -> (Option (U Square Grid))])
 (defn get-spot [world spot]
-  (get-in world [:map spot] ))
+  (get-in world ( flatten [:map spot]) ))
 
 (ann  update-spot [World Spot (Spot -> Spot) -> (Option World)])
 (defn update-spot [world spot f]
-  (update-in  world [:map spot] f))
+  (update-in world (flatten  [:map spot]) f))
 
 (ann  assoc-spot [World Spot (U Square Grid) -> (Option World)])
-(defn assoc-spot [world loc o]
-  (assoc-in world [:map loc] o))
-
+(defn assoc-spot [world spot o]
+  (assoc-in world (flatten  [:map spot]) o))
 
 (ann  add-node [World Spot Keyword -> (Option World)])
-(defn add-node [world loc id]
-  (let [square (get-spot world loc)
+(defn add-node [world spot id]
+  (let [square (get-spot world spot)
         updated-square (conj square id)]
-  (assoc-spot world loc updated-square)))
+  (assoc-spot world spot updated-square)))
 
 (ann  remove-node [World Spot Keyword -> (Option World)])
-(defn remove-node [world loc id]
-  (let [square (get-spot world loc)
+(defn remove-node [world spot id]
+  (let [square (get-spot world spot)
         updated-square (disj square id)]
-  (assoc-spot world loc updated-square)))
+  (assoc-spot world spot updated-square)))
 
 (ann  move-node [World Spot Spot Keyword -> (Option World)])
 (defn move-node [world old-loc new-loc id]
-  (-> (remove-node old-loc id)
-      (add-node    new-loc id)))
+  (remove-node (add-node    new-loc id) old-loc id))
 
 (ann  genname [String -> Keyword])
 (defn genname [base]
@@ -92,13 +91,12 @@
 (defn get-obj [world id]
   (get-in [:state :world-objects id]))
 
-
 (ann  init-obj [World Keyword Spot -> World])
 (defn init-obj [{:keys [state tic] :as world}  base loc]
-  (let [base-obj (get-in state [:base-objects base])
-        loc-obj (assoc-in base-obj [:stats :location] loc)
-        id (genname loc-obj)
-        inst-obj (assoc-in loc-obj [:stats :id] id)]
+  (let [base-obj (get-in state      [:base-objects base])
+        loc-obj  (assoc-in base-obj [:stats :location] loc)
+        id       (genname loc-obj)
+        inst-obj (assoc-in loc-obj  [:stats :id] id)]
     (-> assoc-in world [:state :world-objects id] inst-obj
     (add-node world loc inst-obj))))
 
@@ -113,14 +111,12 @@
 (ann  move-obj [World Spot Spot Keyword -> (Option World)])
 (defn move-obj [world new-loc id]
   (let [old-loc (:location (get-obj world id))]
-  (-> (move-node world old-loc new-loc id)
-      (assoc-obj id :location new-loc))))
+    (assoc-obj (move-node world old-loc new-loc id) id :location new-loc)))
 
 (ann  destroy-obj [World InstId -> World])
 (defn destroy-obj [world id]
   (let [loc (:location (get-obj world id))]
-  (-> (dissoc-in world [:state :world-objects id])
-      (remove-node loc id))))
+     (remove-node (dissoc-in world [:state :world-objects id]) loc id)))
 
 (ann  get-obj-stat [World InstId Keyword -> Any])
 (defn get-obj-stat [world id k]
@@ -137,6 +133,8 @@
 
 (ann  tic [World -> World])
 (defn tic [world]
-  (assoc world :tic (inc (:tic world))))
+  (update-in world [:tic] inc ))
 
 
+(t/fact 
+  (tic empty-world) => (update-in  empty-world [:tic] inc))
